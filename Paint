@@ -1,0 +1,154 @@
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+public class Dibujo extends JFrame{
+    JComboBox<String> comboColores;
+    JPanel panelDibujo, panelSuperior;
+    JButton btnLimpiar, btnSalir;
+
+    BufferedImage imagen;
+    BufferedImage imagenFondo; 
+    Graphics2D g2;
+
+    int xAnterior, yAnterior;
+
+    public Dibujo(){
+        setTitle("Orduña Hernandez Gael Neftali");
+        setSize(400, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        comboColores = new JComboBox<>();
+
+        comboColores.addItem("Rojo");
+        comboColores.addItem("Verde");
+        comboColores.addItem("Azul");
+
+        btnLimpiar = new JButton("Limpiar");
+        
+        btnSalir = new JButton("Salir");
+
+        panelSuperior = new JPanel();
+        panelSuperior.add(comboColores);
+        panelSuperior.add(btnLimpiar);
+        panelSuperior.add(btnSalir);
+
+        add(panelSuperior, BorderLayout.NORTH);
+
+        panelDibujo = new JPanel(){
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+
+                g.drawImage(imagen, 40, 10, null);
+            }
+        };
+        panelDibujo.setBackground(Color.black);
+
+        try (InputStream flujo = Dibujo.class.getResourceAsStream("/fondo.jpg")) {
+            if (flujo == null) {
+                throw new IOException("No se encontró el recurso /fondo.jpg");
+            }
+            imagenFondo = ImageIO.read(flujo);
+        } catch (IOException e) {
+            imagenFondo = new BufferedImage(300, 300, BufferedImage.TYPE_INT_RGB);
+            Graphics2D gFondo = imagenFondo.createGraphics();
+            gFondo.setColor(Color.white);
+            gFondo.fillRect(0, 0, 300, 300);
+            gFondo.dispose();
+            JOptionPane.showMessageDialog(this,
+                "No se encontró 'fondo.jpg'. Se usará un fondo blanco.",
+                "Aviso", JOptionPane.WARNING_MESSAGE);
+        }
+
+        imagen = new BufferedImage(300, 300, BufferedImage.TYPE_INT_RGB);
+
+        g2 = imagen.createGraphics();
+
+        g2.setColor(Color.red);
+
+        g2.drawImage(imagenFondo, 0, 0, imagen.getWidth(), imagen.getHeight(), null);
+
+        comboColores.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               int colorSeleccionado = comboColores.getSelectedIndex();
+                    System.out.println(colorSeleccionado);
+
+                    switch(colorSeleccionado){
+                        case 0:  g2.setColor(Color.red);
+                        break;
+                        case 1:  g2.setColor(Color.green);
+                        break;
+                        case 2:  g2.setColor(Color.blue);
+                        break;
+                    }
+            }
+        });
+
+        btnLimpiar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                g2.drawImage(imagenFondo, 0, 0, imagen.getWidth(), imagen.getHeight(), null);
+                panelDibujo.repaint();
+            }
+        });
+        
+        btnSalir.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
+        panelDibujo.addMouseListener(new MouseAdapter() {
+
+            public void mousePressed(MouseEvent e){
+                xAnterior = e.getX()-40;
+                yAnterior = e.getY();
+
+
+            }
+        });
+
+        panelDibujo.addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e){
+                    int x = e.getX()-40;
+                    int y= e.getY();
+                    g2.drawLine(xAnterior, yAnterior, x, y);
+
+
+
+                    xAnterior = x;
+                    yAnterior = y;
+
+                    panelDibujo.repaint();
+            }
+        });
+
+
+        add(panelDibujo, BorderLayout.CENTER);
+
+    }
+
+    public static void main(String[] args) {
+        Dibujo d = new Dibujo();
+        d.setVisible(true);
+    }
+
+}
